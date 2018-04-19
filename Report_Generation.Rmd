@@ -1,0 +1,54 @@
+---
+title: "Parturition Prediction Scheduled Report"
+author: "Alison Ketz"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
+#### 1.Install and Load Required Packages
+library(xtable)
+library(ggplot2)
+library(knitr)
+```
+
+&nbsp;
+&nbsp;
+```{r,results='asis',message=FALSE,warning=FALSE,echo=FALSE}
+#### 2. Load the results Rdata object to go into the report
+load(file="resultsout.Rdata")
+
+out.df=out.df[order(out.df[,1]),]
+
+out.tab=out.df
+names(out.tab)=c("ID","Result","Prob(Result)","Prob(Threshold)")
+
+# kable(out.df[,1:4],col.names=c("ID","Detection","Prob(Detect)","Prob(Thresh)"))
+tab=xtable(out.tab,
+           caption=paste("Results for",Sys.Date()),
+           caption.placement = 'top',
+           digits=c(0,0,0,-3,-3),
+           align=rep("c",5))
+
+
+print(tab,type="latex",
+      include.rownames=FALSE,
+      comment=FALSE,
+      html.table.attributes = 'align="center",
+                              rules="rows",
+                              width=50%,
+                              frame="below",
+                              border=1
+      ')       
+
+```
+&nbsp;
+&nbsp;
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
+#### 3. Visualize the data
+ggplot(data=out.df,aes(x=id))+geom_point(aes(y=results.prob.sum,color=hits.today))+
+  theme(panel.background = element_rect(fill="white",color="black"),
+        panel.grid.major=element_line("grey90"),
+        axis.text.x = element_text(angle=90))+xlab("Probability(Outcome)")+ylab("Lowtag ID")+ggtitle("Probability of Results Plot")+
+  scale_color_discrete(name="Detection Type")
+```
