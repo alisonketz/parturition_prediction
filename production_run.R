@@ -221,10 +221,6 @@ load('~/Documents/Parturition/180411_parturition/epsilon.Rdata')
 ### easily extendable to all individuals
 ###
 
-y=features[1]
-production(y,eps=epsilon,pw=80)
-
-
 source("production_detector.R")
 out=lapply(features[1:5],function(x){
   production(x,eps=epsilon,pw=80)
