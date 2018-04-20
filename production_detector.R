@@ -7,7 +7,8 @@
 ###################################################################################################
 
 production = function(d,eps,pw=126){
-  
+
+  d=as.data.frame(d)
   nCovs = dim(d)[2]-2
   id = unique(d[,1])
   nInd=length(id)
@@ -94,7 +95,7 @@ production = function(d,eps,pw=126){
     }#end else nCovs>1,nInd = 1
 
     hit.today=results.prob[n.temp,1]=="Hit"
-  
+
     return(list(results.prob=results.prob,
                 detect.quant=detect.quant,
                 threshold.density=threshold.density,

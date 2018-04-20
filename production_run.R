@@ -42,7 +42,6 @@ setwd("~/Documents/Parturition/parturition_prediction")
 ### load mortality data (to make list of individuals who have died)
 ###
 load("morts.Rdata")
-morts
 
 startdate = "2018-03-15 00:00:00 CDT"
 startdate = "2018-01-15 00:00:00 CDT"
@@ -221,6 +220,11 @@ load('~/Documents/Parturition/180411_parturition/epsilon.Rdata')
 ### running across subset of individuals using lapply
 ### easily extendable to all individuals
 ###
+
+y=features[1]
+production(y,eps=epsilon,pw=80)
+
+
 source("production_detector.R")
 out=lapply(features[1:5],function(x){
   production(x,eps=epsilon,pw=80)
@@ -259,8 +263,8 @@ save(out.df,file="resultsout.Rdata")
 
 rmarkdown::render("Report_Generation.Rmd",output_file=paste(Sys.Date(),"-Prediction-Report.pdf",sep=""))
 
-sender <- "alison.ketz@gmail.com" # Replace with a valid address
-recipients <- c("alison.ketz@gmail.com") # Replace with one or more valid addresses
+sender <- "alison.ketz@gmail.com" 
+recipients <- c("alison.ketz@gmail.com") 
 email <- send.mail(from = sender,
                    to = recipients,
                    subject=paste("Prediction Results",Sys.Date()),
