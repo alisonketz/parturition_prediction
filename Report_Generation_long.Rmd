@@ -1,24 +1,22 @@
 ---
-  title: "Parturition Prediction Scheduled Report"
+title: "Parturition Prediction Scheduled Report"
 author: "Alison Ketz"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes: 
   - \usepackage{booktabs}
-- \usepackage{longtable}
-- \usepackage{floatrow}
-- \floatsetup[table]{capposition=top}
-- \usepackage{wrapfig}
-- \usepackage{float}
-
+  - \usepackage{longtable}
+  - \usepackage{floatrow}
+  - \floatsetup[table]{capposition=top}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
 output: pdf_document
 ---
-  
-  ```{r,message=FALSE,warning=FALSE,echo=FALSE}
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 #### 1.Install and Load Required Packages
 library(xtable)
 library(ggplot2)
 library(knitr)
-library(reshape2)
 ```
 
 &nbsp;
@@ -27,18 +25,18 @@ library(reshape2)
 #### 2. Load the results Rdata object to go into the report
 load(file=paste("Results/",Sys.Date(),"-resultsout.Rdata",sep=""))
 
-out.df=out.df[order(out.df[,1]),1:3]
+out.df=out.df[order(out.df[,1]),]
 out.tab=out.df
 out.df.hit=out.df[out.df[,2]=="Hit",]
-names(out.tab)=c("ID","Result","Prob(Result)")
+names(out.tab)=c("ID","Result","Prob(Result)","Prob(Threshold)")
 
 out.hit = out.tab[out.tab[,2]=="Hit",]
 
 # kable(out.df[,1:4],col.names=c("ID","Detection","Prob(Detect)","Prob(Thresh)"))
 tab.hit=xtable(out.hit,
-               caption=paste("Predicted births",Sys.Date()),
-               digits=c(0,0,0,-3),
-               align=rep("c",4))
+           caption=paste("Predicted births",Sys.Date()),
+           digits=c(0,0,0,-3,-3),
+           align=rep("c",5))
 
 if(dim(out.hit)[1]==0){print("There were no predicted births today.")}else{print(tab.hit,type="latex",include.rownames=FALSE,comment=FALSE,caption.placement = 'top')}
 
@@ -48,16 +46,16 @@ if(dim(out.hit)[1]==0){print("There were no predicted births today.")}else{print
 #### 3. Visualize the data
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
+out.df.hit
 
 
 
 
 
-
-ggplot(data=out.df.hit,aes(x=id))+geom_point(aes(y=results.prob.sum))+
+ggplot(data=out.df.hit,aes(x=id))+geom_point(aes(y=value,color=variable))+
   theme(panel.background = element_rect(fill="white",color="black"),
         panel.grid.major=element_line("grey90"),
-        axis.text.x = element_text(angle=90))+ylab("Probability(Hit)")+xlab("Lowtag ID")+ggtitle("Probability of Results Plot") +ylim(0,1)
+        axis.text.x = element_text(angle=90))+ylab("Probability(Outcome)")+xlab("Lowtag ID")+ggtitle("Probability of Results Plot") 
 ```
 \newpage
 
@@ -70,9 +68,9 @@ out.out = out.tab[out.tab[,2]!="Hit",]
 
 
 print(xtable(out.out,
-             caption=paste("Not predicted births",Sys.Date()),
-             digits=c(0,0,0,-3),
-             align=rep("c",4)),
+           caption=paste("Not predicted births",Sys.Date()),
+           digits=c(0,0,0,-3,-3),
+           align=rep("c",5)),
       type="latex",
       include.rownames=FALSE,
       caption.placement = 'top',

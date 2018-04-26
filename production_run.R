@@ -26,7 +26,7 @@ rm(list=ls())
 ###
 ### Load Libraries
 ###
-
+.libPaths("C:/Users/ketza/Documents/R/win-library/3.4")
 library(lubridate)
 library(adehabitatLT)
 library(geosphere)
@@ -37,21 +37,19 @@ library(rmarkdown)
 library(ggplot2)
 library(rgdal)
 
-setwd("~/Documents/Parturition/parturition_prediction")
+setwd("C:/Users/ketza/Documents/parturition_prediction")
 
 ### load mortality data (to make list of individuals who have died)
 ###
 load("morts.Rdata")
 
 startdate = "2018-03-15 00:00:00 CDT"
-startdate = "2018-01-15 00:00:00 CDT"
-
 
 ###
 ### set working directory to where the data csv files are
 ###
 
-setwd('~/Documents/Data/GPS_Lotek/Position Data')
+setwd('C:/Users/ketza/Documents/GPS_Lotek/Position Data')
 
 ###
 ### Read data 
@@ -65,7 +63,7 @@ myfiles = lapply(datalist_temp, read.csv,header=TRUE,stringsAsFactors=FALSE)
 nameHeader = tolower(gsub('[[:punct:]]',"",names(myfiles[[1]])))
 
 #reset wd
-setwd("~/Documents/Parturition/parturition_prediction")
+setwd("C:/Users/ketza/Documents/parturition_prediction")
 
 #clean data
 datafiles=lapply(myfiles,function(x){
@@ -214,16 +212,27 @@ features=lapply(datafiles,function(x){
 })
 
 
-load('~/Documents/Parturition/180411_parturition/epsilon.Rdata')
+
+### remove individuals without observations since spring start date
+maxdates=sapply(features,function(x){
+  max(x[,2])
+})
+maxdatess=unlist(maxdates)
+features[which(maxdates<105)]=NULL
+
+load('epsilon.Rdata')
 
 ###
 ### running across subset of individuals using lapply
 ### easily extendable to all individuals
 ###
 
+yday("2018-04-15")
+# [1] 105
+
 source("production_detector.R")
-out=lapply(features[1:5],function(x){
-  production(x,eps=epsilon,pw=80)
+out=lapply(features,function(x){
+  production(x,eps=epsilon,pw=105)
 })
 
 hits = sapply(out,function(x){x$hit.today})
@@ -248,7 +257,7 @@ if(sum(hits)==0){
   body.out= paste("Lowtag of predicted births: \n",paste(as.character(id[hits]),collapse="\n"),sep="")
 }
 
-save(out.df,file="resultsout.Rdata")
+save(out.df,file=paste("Results/",Sys.Date(),"-resultsout.Rdata",sep=""))
 
 ########################################################################################
 ###
@@ -259,15 +268,27 @@ save(out.df,file="resultsout.Rdata")
 
 rmarkdown::render("Report_Generation.Rmd",output_file=paste(Sys.Date(),"-Prediction-Report.pdf",sep=""))
 
-sender <- "alison.ketz@gmail.com" 
-recipients <- c("alison.ketz@gmail.com") 
-email <- send.mail(from = sender,
-                   to = recipients,
+# sender <- "alison.ketz@gmail.com" 
+# recipients <- c("alison.ketz@gmail.com","aketz@wisc.edu") 
+# email <- send.mail(from = sender,
+#                    to = recipients,
+#                    subject=paste("Prediction Results",Sys.Date()),
+#                    body = print(body.out),
+#                    smtp = list(host.name = "aspmx.l.google.com", port = 25),
+#                    authenticate = FALSE,
+#                    attach.files = paste(getwd(),"/",Sys.Date(),"-Prediction-Report.pdf",sep="") ,
+#                    debug=FALSE,
+#                    send = TRUE)
+
+sender <- "aketz@wisc.edu" 
+recipients <- c("alison.ketz@gmail.com","aketz@wisc.edu") 
+sapply(recipients,function(x){send.mail(from = sender,
+                   to = x,
                    subject=paste("Prediction Results",Sys.Date()),
                    body = print(body.out),
-                   smtp = list(host.name = "aspmx.l.google.com", port = 25),
-                   authenticate = FALSE,
-                   attach.files = paste(getwd(),"/",Sys.Date(),"-Prediction-Report.pdf",sep="") ,
+                   smtp = list(host.name = "smtp.office365.com",port=587,user.name="aketz@wisc.edu",passwd="Recess$5505",tls=TRUE),
+                   authenticate = TRUE,
+                   attach.files = paste("C:/Users/ketza/Documents/parturition_prediction/Results/",Sys.Date(),"-Prediction-Report.pdf",sep="") ,
                    debug=FALSE,
-                   send = TRUE)
+                   send = TRUE)})
 
