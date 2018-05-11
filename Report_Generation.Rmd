@@ -1,81 +1,212 @@
 ---
-  title: "Parturition Prediction Scheduled Report"
+title: "Parturition Prediction Scheduled Report"
 author: "Alison Ketz"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "`r format(Sys.time(), '%d %B, %Y %p')`"
 header-includes: 
   - \usepackage{booktabs}
-- \usepackage{longtable}
-- \usepackage{floatrow}
-- \floatsetup[table]{capposition=top}
-- \usepackage{wrapfig}
-- \usepackage{float}
-
+  - \usepackage{longtable}
+  - \usepackage{floatrow}
+  - \floatsetup[table]{capposition=top}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
 output: pdf_document
 ---
   
-  ```{r,message=FALSE,warning=FALSE,echo=FALSE}
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
 #### 1.Install and Load Required Packages
 library(xtable)
 library(ggplot2)
 library(knitr)
-library(reshape2)
+library(lubridate)
+
 ```
 
 &nbsp;
 &nbsp;
-```{r,results='asis',message=FALSE,warning=FALSE,echo=FALSE}
+```{r,results='asis',message=FALSE,warning=FALSE,echo=FALSE,results='asis'}
 #### 2. Load the results Rdata object to go into the report
-load(file=paste("Results/",Sys.Date(),"-resultsout.Rdata",sep=""))
+load(file=paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-resultsout.Rdata",sep=""))
 
-out.df=out.df[order(out.df[,1]),1:3]
+out.df=out.df[order(out.df[,1]),]
+out.df=out.df[,c(1,2,4,5,8)]
+
 out.tab=out.df
-out.df.hit=out.df[out.df[,2]=="Hit",]
-names(out.tab)=c("ID","Result","Prob(Result)")
+out.df.hit=out.tab[out.tab[,2]=="Hit",]
+names(out.tab)=c("ID","Result","Last Date Obs","Prob(Result)","Missing GPS")
 
 out.hit = out.tab[out.tab[,2]=="Hit",]
+out.hit = out.hit[,c(1,3,4,5)]
+if(dim(out.hit)[1]!=0){out.hit[,3]=as.character(signif(out.hit[,3],3))}
 
-# kable(out.df[,1:4],col.names=c("ID","Detection","Prob(Detect)","Prob(Thresh)"))
 tab.hit=xtable(out.hit,
-               caption=paste("Predicted births",Sys.Date()),
-               digits=c(0,0,0,-3),
-               align=rep("c",4))
+               caption=paste("Predicted births",Sys.Date(),"-",format(Sys.time(),"%p")),
+               floating=TRUE,
+               type="latex",
+               digits=c(0,0,0,3,0),
+               align=rep("c",5))
 
-if(dim(out.hit)[1]==0){print("There were no predicted births today.")}else{print(tab.hit,type="latex",include.rownames=FALSE,comment=FALSE,caption.placement = 'top')}
+if(dim(out.hit)[1]==0){cat("There were no predicted births today.")}else{print(tab.hit,type="latex",include.rownames=FALSE,comment=FALSE,caption.placement = 'top',table.position="H")}
+
+# if(dim(out.hit)[1]==0){
+#   print("There were no predicted births today.")
+#   }else{
+#   kable(out.hit,format="latex",caption=paste("Predicted births",Sys.Date(),"-",format(Sys.time(),"%p"))) %>%
+#   kable_styling(position = "center")
+# }
 
 ```
 
-```{r,message=FALSE,warning=FALSE,echo=FALSE}
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis'}
+
+cat("GPS missing are the number of data points missing during the last two julian days of observed data.")
+
+```
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis'}
 #### 3. Visualize the data
 cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-
-
-
-
-
-
 
 ggplot(data=out.df.hit,aes(x=id))+geom_point(aes(y=results.prob.sum))+
   theme(panel.background = element_rect(fill="white",color="black"),
         panel.grid.major=element_line("grey90"),
-        axis.text.x = element_text(angle=90))+ylab("Probability(Hit)")+xlab("Lowtag ID")+ggtitle("Probability of Results Plot") +ylim(0,1)
+        axis.text.x = element_text(angle=90))+ylab("Probability(Hit today/yesterday)")+xlab("Lowtag ID")+ggtitle("Probability of Results Plot") +ylim(0,1)
 ```
 \newpage
 
 ```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis'}
-load(file=paste("Results/",Sys.Date(),"-resultsout.Rdata",sep=""))
-out.df=out.df[order(out.df[,1]),]
-out.tab=out.df
-names(out.tab)=c("ID","Result","Prob(Result)","Prob(Threshold)")
+
+
 out.out = out.tab[out.tab[,2]!="Hit",]
+names(out.tab)=c("ID","Result","Last Obs Date","Prob(Result)")
+
+# print(xtable(out.out,
+#              caption=paste("No predicted births. These individuals were run through anomaly detection but were not 'hits'. "),
+#              digits=c(0,0,0,0,-3),
+#              align=rep("c",5)),
+#       type="latex",
+#       include.rownames=FALSE,
+#       caption.placement = 'top',
+#       comment=FALSE,
+#       floating=FALSE,
+#       table.placement = "H")
+
+out.out[,4]=as.character(signif(out.out[,4],3))
+
+kable(out.out,format="latex",booktabs=TRUE,caption="No predicted births. These individuals were run through anomaly detection but were not hits today/yesterday.",longtable=TRUE,row.names=FALSE)
+
+# caption="No predicted births. These individuals were run through anomaly detection but were not hits."
+
+```
+
+\newpage
 
 
-print(xtable(out.out,
-             caption=paste("Not predicted births",Sys.Date()),
-             digits=c(0,0,0,-3),
-             align=rep("c",4)),
-      type="latex",
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis',fig.height=10,fig.width=7.5}
+#### 3. Visualize the data
+load(paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-hit.df.Rdata",sep=""))
+hit.df$gridday=1
+Today=yday(Sys.Date())
+hit.df$gridday[hit.df$Day==Today]=2
+hit.df$gridday=as.factor(hit.df$gridday)
+
+nInd.run=length(unique(hit.df$ID))
+pal2 = c("#fc8d59","#ffffbf","#67a9cf","#e6550d")
+
+hit.df.split=split(hit.df,as.factor(hit.df$face))
+for(k in 1:(length(hit.df.split)-1)){
+    hit.df.split[[k]]$Hit=as.factor(hit.df.split[[k]]$Hit)
+    print(ggplot(hit.df.split[[k]],aes(x=Day,y=ID,fill=Hit))+
+        geom_tile(aes(fill=Hit),size=.5)+
+        geom_tile(aes(color=gridday),size=.5)+
+        xlab("Date")+ylab("Individual")+
+        theme(panel.background = element_rect(fill="white",color="black"),legend.position = "n",
+            axis.text.x=element_text(angle=90,vjust=.5))+
+        scale_fill_manual(values=c(pal2[2],pal2[3]))+
+        scale_color_manual(values=c("grey90","black"))+ 
+        scale_x_discrete(limit =min(hit.df$Day):max(hit.df$Day),labels=as.Date(min(hit.df$Day):max(hit.df$Day),origin="2017-12-31")))
+    cat("\n\n\\pagebreak\n")
+}
+    k=k+1
+    hit.df.split[[k]]$Hit=as.factor(hit.df.split[[k]]$Hit)
+    print(ggplot(hit.df.split[[k]],aes(x=Day,y=ID,fill=Hit))+
+        geom_tile(aes(fill=Hit),size=.5)+
+        geom_tile(aes(color=gridday),size=.5)+
+        coord_fixed(ratio=3)+
+        xlab("Date")+ylab("Individual")+
+        theme(panel.background = element_rect(fill="white",color="black"),legend.position = "n",
+            axis.text.x=element_text(angle=90,vjust=.5))+
+        scale_fill_manual(values=c(pal2[2],pal2[3]))+
+        scale_color_manual(values=c("grey90","black"))+ 
+        scale_x_discrete(limit =min(hit.df$Day):max(hit.df$Day),labels=as.Date(min(hit.df$Day):max(hit.df$Day),origin="2017-12-31")))
+
+```
+\newpage
+
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis',fig.pos="H"}
+
+load(paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-notrun.df.Rdata",sep=""))
+
+names(notrun.df)=c("ID","Last Observed Date")
+notrun.df=notrun.df[order(as.numeric(notrun.df$ID)),]
+
+print(xtable(notrun.df,
+             caption=paste("Individuals not run through the anomaly detector. This table consists of the subset of individuals who do not have new data observed since the parturition window began, i.e. no new data since May 1."),
+             digits=c(0,0,0),
+             align=rep("c",3)),
+              type="latex",
       include.rownames=FALSE,
       caption.placement = 'top',
-      comment=FALSE,tabular.environment = 'longtable')
+      comment=FALSE,
+      table.placement="H")
 
-```0
+# kable(notrun.df,format="latex",caption="Individuals not run through the anomaly detector. This table consists of the subset of individuals who do not have new data observed since the parturition window began, i.e. no new data since May 1.",booktabs=TRUE) %>% kable_styling(position = "center")
+
+
+```
+\newpage 
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis'}
+load(file=paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-notresultsout.Rdata",sep=""))
+
+not.out.df=not.out.df[order(not.out.df[,1]),]
+names(not.out.df)=c("ID","Last Result","Last Julian","Last Obs Date","Prob(Results)","Prob(Thresh)","Prob(Tail)")
+
+for(i in 5:7){
+  not.out.df[,i]=as.character(signif(not.out.df[,i],4))
+
+}
+
+# print(xtable(not.out.df,
+#              caption=paste("No recent data within 2 julian days. These individuals were run through anomaly detection, but no new data has been observed today or the day prior to today, therefore they could not be a 'hit today'."),
+#              align=rep("c",3)),
+#       type="latex",
+#       include.rownames=FALSE,
+#       caption.placement = 'top',
+#       comment=FALSE,
+#       table.placement="H",
+#       tabular.environment='longtable',
+#       floating=FALSE)
+
+kable(not.out.df,format="latex",caption="Latest results for the individuals that were run through the anomaly detection, but no new data has been observed today/yesterday, therefore they could not be a 'hit today'.",booktabs=TRUE,row.names=FALSE,longtable=TRUE,align=c(rep('c',times=7)),)
+```
+
+\newpage
+```{r,message=FALSE,warning=FALSE,echo=FALSE,results='asis',fig.pos='H'}
+
+load(paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-miss.gps.Rdata",sep=""))
+
+miss.gps = miss.gps[order(miss.gps[,1]),]
+miss.gps$ids=as.factor(miss.gps$ids)
+miss.gps$face=c(rep(1,floor(dim(miss.gps)[1]/2)),rep(2,dim(miss.gps)[1]-floor(dim(miss.gps)[1]/2)))
+
+miss.gps.split=split(miss.gps,as.factor(miss.gps$face))
+for(k in 1:length(miss.gps.split)){
+  print(ggplot(data=miss.gps.split[[k]],aes(x=ids,y=miss.long))+geom_point(size=1)+
+  theme(panel.background = element_rect(fill="white",color="black"),
+        panel.grid.major=element_line("grey90"),
+        axis.text.x = element_text(angle=90))+ylab("Number of missing fixes")+
+        xlab("Lowtag ID")+ggtitle("Number of missing GPS data points")+
+        ylim(0,max(miss.gps$miss.long)+10))
+#  cat("\n\n\\pagebreak\n")
+}
+
+```
