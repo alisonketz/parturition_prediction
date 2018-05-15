@@ -298,7 +298,24 @@ lower.p.sum = sapply(out,function(x){tail(x$lower.prob,1)})
 last.julian.obs = sapply(out,function(x){tail(x$results.prob,1)[,3]})
 last.date.obs=sapply(out,function(x){y=tail(x$results.prob,1)[,4];as.character(y)})
 id = as.factor(sapply(out,function(x){x$id}))
+tail.dens=sapply(out,function(x){tail(x$detect.density,1)})
+thresh.dens=sapply(out,function(x){x$threshold.density})
 
+
+###
+### EDA 5983, to determine why this is different from early PW
+###
+
+# sink("production_run_early_output5983.txt")
+# out[[which(id==5983)]]
+# sink()
+# 
+# rawdata5983early=datafiles[which(ids=="5983")]
+# features5983early=features[which(id==5983)]
+# save(rawdata5983early,file="rawdata5983early.Rdata")
+# save(features5983early,file="features5983early.Rdata")
+# out_early_5983=out[[which(id==5983)]]
+# save(out_early_5983,file="out_early_5983.Rdata")
 
 #email body text output
 
@@ -349,7 +366,7 @@ length(id)
 length(missed.latest)
 
 #dataframe output of anomaly detection results for individuals run
-out.df=data.frame(id,hits.today,last.julian.obs,last.date.obs,results.prob.sum,threshold.p.sum,lower.p.sum,missed.latest,stringsAsFactors = FALSE)
+out.df=data.frame(id,hits.today,last.julian.obs,last.date.obs,results.prob.sum,threshold.p.sum,lower.p.sum,missed.latest,tail.dens,thresh.dens,stringsAsFactors = FALSE)
 
 #subset of individuals who's latest observation was not today's date, or yesterdays date
 not.out.df = out.df[out.df$last.julian.obs!=julian.today & out.df$last.julian.obs!=(julian.today-1),]
@@ -405,22 +422,28 @@ save(not.out.df,file=paste("Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-n
 ###
 ########################################################################################
 
-rmarkdown::render("Report_Generation.Rmd",output_file=paste(Sys.Date(),"-",format(Sys.time(),"%p"),"-Prediction-Report.pdf",sep=""),output_dir = "Results")
+rmarkdown::render("Report_Generation.Rmd",output_file=paste(Sys.Date(),"-",format(Sys.time(),"%p"),"-Prediction-Report-Early-PW.pdf",sep=""),output_dir = "Results")
+
+# 
+# html_msg_attach <- mime() %>%
+#   to(c("aketz@wisc.edu")) %>%
+#   from("wtdparturition@gmail.com") %>%
+#   subject(paste("Prediction Results",Sys.Date(),"-",format(Sys.time(),"%p"))) %>%
+#   html_body(print(body.out))%>%
+#   attach_part(print(body.out)) %>%
+#   attach_file(paste("C:/Users/ketza/Documents/parturition_prediction/Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-Prediction-Report-Early-PW.pdf",sep=""))
+# 
+
 
 html_msg_attach <- mime() %>%
   to(c("aketz@wisc.edu",
 	"DanielJ.Storm@wisconsin.gov",
-	"dwalsh@usgs.gov",
-	"Wesley.Ellarson@wisconsin.gov",
-	"Katie.Luukkonen@wisconsin.gov",
-	"Logan.Hahn@wisconsin.gov",
-	"Dana.Jarosinski@wisconsin.gov",
-	"Hannah.Manninen@wisconsin.gov")) %>%
+	"dwalsh@usgs.gov")) %>%
   from("wtdparturition@gmail.com") %>%
   subject(paste("Prediction Results",Sys.Date(),"-",format(Sys.time(),"%p"))) %>%
   html_body(print(body.out))%>%
   attach_part(print(body.out)) %>%
-  attach_file(paste("C:/Users/ketza/Documents/parturition_prediction/Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-Prediction-Report.pdf",sep=""))
+  attach_file(paste("C:/Users/ketza/Documents/parturition_prediction/Results/",Sys.Date(),"-",format(Sys.time(),"%p"),"-Prediction-Report-Early-PW.pdf",sep=""))
 
 send_message(html_msg_attach)
 
@@ -429,3 +452,14 @@ send_message(html_msg_attach)
 ### Email addresses to send prediction results report
 ###
 #	
+# 
+# 
+# rawdatafiles5983early=datafiles[[which(ids==5983)]]
+# save(rawdatafiles5983early,file="rawdatafiles5983early.Rdata")
+# 
+# features5983early=features[[which(id==5983)]]
+# save(features5983early,file="features5983early.Rdata")
+# 
+# out5983early=out[[which(id==5983)]]
+# save(out5983early,file="out5983early.Rdata")
+# 

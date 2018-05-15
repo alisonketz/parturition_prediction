@@ -126,6 +126,8 @@ production = function(d,eps,pw=126){
                 outs.indx=outs.indx,
                 hit.today=hit.today,
                 id=id,
-                alarm=alarm))
+                alarm=alarm,
+                ind.mean=ind.mean,
+                ind.sd=ind.sd))
   
 }#end production function
